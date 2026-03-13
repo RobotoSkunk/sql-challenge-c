@@ -59,7 +59,8 @@ SELECT * FROM HardwareComponents;
 ------------------------
 -- Build computers :) --
 ------------------------
--- PC 1
+
+-- Example PC from PDF
 INSERT INTO PcParts(ComponentId, Quantity, ParentId) VALUES (1, 1, NULL); -- Personal Computer (ID 1)
 INSERT INTO PcParts(ComponentId, Quantity, ParentId) VALUES (2, 1, 1); -- Power Supply (ID 2)
 INSERT INTO PcParts(ComponentId, Quantity, ParentId) VALUES (3, 1, 1); -- Case (ID 3)
@@ -68,27 +69,73 @@ INSERT INTO PcParts(ComponentId, Quantity, ParentId) VALUES (5, 1, 4); -- CPU (I
 INSERT INTO PcParts(ComponentId, Quantity, ParentId) VALUES (6, 2, 4); -- RAM (ID 6)
 
 SELECT
+	PcParts.Id AS Id,
 	HardwareComponents.Name AS Name,
-	PcParts.Quantity AS Quantity,
-	(
-		SELECT
-			HardwareComponents.Name AS Name
-		FROM HardwareComponents
-		WHERE HardwareComponents.Id = PcParts.ParentId
-	) AS Parent
+	CASE
+		WHEN HardwareComponents.IsSubassembly = 1 THEN 'Y'
+		ELSE 'N'
+	END AS IsFinal,
+	PcParts.ParentId AS ParentId
 FROM PcParts
-JOIN HardwareComponents ON PcParts.ComponentId = HardwareComponents.Id;
+JOIN HardwareComponents ON PcParts.ComponentId = HardwareComponents.Id
+ORDER BY Id;
 
 -- Result Set Batch 1 - Query 1
 -- ========================================
 
--- Name               Quantity    Parent           
--- -----------------  ----------  -----------------
--- Personal Computer  1           NULL             
--- Power Supply       1           Personal Computer
--- Case               1           Personal Computer
--- Motherboard        1           Personal Computer
--- CPU                1           Motherboard      
--- RAM                2           Motherboard      
+-- Id          Name               IsFinal     ParentId  
+-- ----------  -----------------  ----------  ----------
+-- 1           Personal Computer  Y           NULL      
+-- 2           Power Supply       N           1         
+-- 3           Case               N           1         
+-- 4           Motherboard        Y           1         
+-- 5           CPU                N           4         
+-- 6           RAM                N           4              
 -- ((6 rows affected))
 
+
+
+
+-- Components to build 5 PCs
+-- I'll assume all PC will also have 1 GPU, 1 Network Card and just 2 RAM sticks
+INSERT INTO PcParts(ComponentId, Quantity, ParentId) VALUES (1, 5,  NULL); -- Personal Computer (ID 7)
+INSERT INTO PcParts(ComponentId, Quantity, ParentId) VALUES (2, 5,  7); -- Power Supply (ID 8)
+INSERT INTO PcParts(ComponentId, Quantity, ParentId) VALUES (3, 5,  7); -- Case (ID 9)
+INSERT INTO PcParts(ComponentId, Quantity, ParentId) VALUES (4, 5,  7); -- Motherboard (ID 10)
+INSERT INTO PcParts(ComponentId, Quantity, ParentId) VALUES (5, 5,  10); -- CPU (ID 11)
+INSERT INTO PcParts(ComponentId, Quantity, ParentId) VALUES (6, 10, 10); -- RAM (ID 12)
+INSERT INTO PcParts(ComponentId, Quantity, ParentId) VALUES (7, 5,  10); -- GPU (ID 13)
+INSERT INTO PcParts(ComponentId, Quantity, ParentId) VALUES (8, 5,  10); -- Network Card (ID 14)
+
+SELECT
+	PcParts.Id AS Id,
+	HardwareComponents.Name AS Name,
+	CASE
+		WHEN HardwareComponents.IsSubassembly = 1 THEN 'Y'
+		ELSE 'N'
+	END AS IsFinal,
+	PcParts.ParentId AS ParentId
+FROM PcParts
+JOIN HardwareComponents ON PcParts.ComponentId = HardwareComponents.Id
+ORDER BY Id;
+
+-- Result Set Batch 1 - Query 1
+-- ========================================
+
+-- Id          Name               IsFinal     ParentId  
+-- ----------  -----------------  ----------  ----------
+-- 1           Personal Computer  Y           NULL      
+-- 2           Power Supply       N           1         
+-- 3           Case               N           1         
+-- 4           Motherboard        Y           1         
+-- 5           CPU                N           4         
+-- 6           RAM                N           4         
+-- 7           Personal Computer  Y           NULL      
+-- 8           Power Supply       N           7         
+-- 9           Case               N           7         
+-- 10          Motherboard        Y           7         
+-- 11          CPU                N           10        
+-- 12          RAM                N           10        
+-- 13          GPU                N           10        
+-- 14          Network Card       N           10        
+-- ((14 rows affected))
